@@ -20,9 +20,10 @@ public class Main {
         CityCatalog catalog = CityCatalog.getInstance();
         TripCreate dispatcher = new TripCreate(catalog);
         TripGenerator generator = new TripGenerator(dispatcher);
-        var size = 250000;
+        var size = 250000 * 4;
         System.out.println("Collection size: "+ size);
         List<Trip> allTrips = generator.generate(size);
+        var tp = dispatcher.getAllTrips();
         var price = new BigDecimal(500);
     
         var startTime = System.currentTimeMillis();
@@ -39,7 +40,7 @@ public class Main {
         tripExpensive500 = findTripsExpensivePriceCollector(allTrips, price);
         endTime = System.currentTimeMillis();
         System.out.println("Time Collector price more: " + (endTime - startTime) + " ms");
-
+        System.out.println();
         var optMoscow = catalog.findByName("Moscow");
         if(optMoscow.isPresent())
         {
@@ -58,7 +59,7 @@ public class Main {
             tripToMoscow = findInterCityTripsToCurrentCityCollector(allTrips, moscow);
             endTime = System.currentTimeMillis();
             System.out.println("Time Collector to Moscow: " + (endTime - startTime) + " ms");
-
+            System.out.println();
             startTime = System.currentTimeMillis();
             var averagePriceToCityIterative = findAveragePriceToCityIterative(allTrips, moscow);
             endTime = System.currentTimeMillis();
@@ -75,6 +76,11 @@ public class Main {
             System.out.println("Time Collector to average="+ averagePriceToCityIterative+ " time=" + (endTime - startTime) + " ms");
 
             startTime = System.currentTimeMillis();
+            averagePriceToCityIterative = findAveragePriceToCityCollectorStreamAPI(allTrips, moscow);
+            endTime = System.currentTimeMillis();
+            System.out.println("Time Collector + StreamAPI to average="+ averagePriceToCityIterative+ " time=" + (endTime - startTime) + " ms");
+            System.out.println();
+            startTime = System.currentTimeMillis();
             var averageAgeToCityIterative = findAverageAgeToCityIterative(allTrips, moscow);
             endTime = System.currentTimeMillis();
             System.out.println("Time Iterative to average Age="+ averageAgeToCityIterative+ " time=" + (endTime - startTime) + " ms");
@@ -88,6 +94,11 @@ public class Main {
             averageAgeToCityIterative = findAverageAgeToCityCollector(allTrips, moscow);
             endTime = System.currentTimeMillis();
             System.out.println("Time Collector to average Age="+ averageAgeToCityIterative+ " time=" + (endTime - startTime) + " ms");
+
+            startTime = System.currentTimeMillis();
+            averageAgeToCityIterative = TripOperationsParallel.findAverageAgeToCityStreamAPIWithMySpliterator(allTrips, moscow,0 );
+            endTime = System.currentTimeMillis();
+            System.out.println("Time findAverageAgeToCityStreamAPIWithMySpliterator Age="+ averageAgeToCityIterative+ " time=" + (endTime - startTime) + " ms");
         }
     }
 

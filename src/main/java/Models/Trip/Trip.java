@@ -56,7 +56,18 @@ public abstract class Trip {
     public BigDecimal getPrice() { return price; }
     public TripType getType() { return type; }
     public City getStartCity() { return startCity; }
-    public People getPeople() { return people; }
+    public People getPeople(){return people;}
+    public People getPeople(long delay)
+    {
+        if(delay>0) {
+            try {
+                Thread.sleep(delay);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        return people;
+    }
     public Transport getTransport() { return transport; }
     public LocalDateTime getStartTime() { return startTime; }
 

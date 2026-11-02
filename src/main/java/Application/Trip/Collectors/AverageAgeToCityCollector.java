@@ -2,11 +2,9 @@ package Application.Trip.Collectors;
 
 import Models.City.City;
 import Models.People.People;
-import Models.Trip.Enums.TripType;
 import Models.Trip.IntercityTrip;
 import Models.Trip.Trip;
 
-import java.math.BigDecimal;
 import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Set;
@@ -38,8 +36,10 @@ public class AverageAgeToCityCollector
     @Override
     public BiConsumer<Subtotal, Trip> accumulator() {
         return (subtotal, trip) -> {
-            if (trip.getType() == TripType.INTRACITY) return;
-            if (((IntercityTrip)trip).getEndCity() == city) {
+            if (trip instanceof IntercityTrip ic) {
+                if (ic.getEndCity() != city) {
+                    return;
+                }
                 People people = trip.getPeople();
                 if (people == null) return;
 

@@ -1,9 +1,6 @@
 package Core.Main;
 
-import Application.Trip.Collectors.AverageAgeToCityCollector;
-import Application.Trip.Collectors.AveragePriceToCityCollector;
-import Application.Trip.Collectors.ExpensiveTripsCollector;
-import Application.Trip.Collectors.InterCityTripsToCurrentCityCollector;
+import Application.Trip.Collectors.*;
 import Models.City.City;
 import Models.People.People;
 import Models.Trip.Enums.TripType;
@@ -75,9 +72,7 @@ public class TripOperations {
         }
 
         return trips.stream()
-                .filter(Objects::nonNull)
-                .filter(t -> t.getType() != TripType.INTRACITY)
-                .filter(t -> ((IntercityTrip)t).getEndCity() == city)
+                .filter(t -> t instanceof IntercityTrip ic && ic.getEndCity() == city)
                 .toList();
     }
 
@@ -98,9 +93,9 @@ public class TripOperations {
         for (Trip trip : trips) {
             if (trip != null && trip.getType() == TripType.INTERCITY)
             {
-                if(((IntercityTrip)trip).getEndCity() == city)
+                if(trip instanceof IntercityTrip ic)
                 {
-                    BigDecimal price = trip.getPrice();
+                    BigDecimal price = ic.getPrice();
                     if (price == null) continue;
                     sum = sum.add(price);
                     count++;
@@ -125,7 +120,6 @@ public class TripOperations {
                 .filter(t -> t instanceof IntercityTrip ic
                         && ic.getEndCity() == city)
                 .map(Trip::getPrice)
-                .filter(Objects::nonNull)
                 .collect(Collectors.teeing(
                         Collectors.reducing(
                                 BigDecimal.ZERO,
@@ -148,6 +142,19 @@ public class TripOperations {
 
     }
 
+    public static BigDecimal findAveragePriceToCityCollectorStreamAPI(List<Trip> trips, City city) {
+
+        if (trips == null || city == null) {
+            return BigDecimal.ZERO;
+        }
+
+        return trips.stream()
+                .filter(t -> t instanceof IntercityTrip ic
+                        && ic.getEndCity() == city)
+                .map(Trip::getPrice).collect(new AveragePriceToCityCollectorWithSpecificStream());
+
+    }
+
     public static BigDecimal findAveragePriceToCityCollector(List<Trip> trips, City city) {
 
         if (trips == null || city == null) {
@@ -164,11 +171,11 @@ public class TripOperations {
         double sum = 0;
         var count = 0;
         for (Trip trip : trips) {
-            if (trip != null && trip.getType() == TripType.INTERCITY)
+            if (trip instanceof IntercityTrip ic)
             {
-                if(((IntercityTrip)trip).getEndCity() == city)
+                if(ic.getEndCity() == city)
                 {
-                    People price = trip.getPeople();
+                    People price = ic.getPeople();
                     if (price == null) continue;
 
                     sum = sum+price.Age();
@@ -192,8 +199,33 @@ public class TripOperations {
 
         SumCount result = trips.stream()
                 .filter(t -> t instanceof IntercityTrip ic
-                        && Objects.equals(ic.getEndCity(), city))
+                        && ic.getEndCity() ==city)
                 .map(Trip::getPeople)
+                .filter(Objects::nonNull)
+                .collect(Collectors.teeing(
+                        Collectors.summingInt(People::Age),     // сумма
+                        Collectors.counting(),                   // количество
+                        SumCount::new
+                ));
+
+        return result.count() == 0
+                ? 0.0
+                : (double) result.sum() / result.count();
+
+    }
+
+    public static double findAverageAgeToCityStreamAPI(List<Trip> trips, City city, long delay) {
+
+        if (trips == null || city == null) {
+            return 0;
+        }
+
+        record SumCount(int sum, long count) {}
+
+        SumCount result = trips.stream()
+                .filter(t -> t instanceof IntercityTrip ic
+                        && ic.getEndCity() ==city)
+                .map(t -> t.getPeople(delay))
                 .filter(Objects::nonNull)
                 .collect(Collectors.teeing(
                         Collectors.summingInt(People::Age),     // сумма

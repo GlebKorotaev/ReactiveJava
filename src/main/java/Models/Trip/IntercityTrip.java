@@ -36,6 +36,17 @@ public class IntercityTrip extends Trip {
         return endCity;
     }
 
+    public City getEndCity(long delay) {
+        if(delay>0) {
+            try {
+                Thread.sleep(delay);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        return endCity;
+    }
+
     @Override
     public String toString() {
         return "IntercityTrip{" +
